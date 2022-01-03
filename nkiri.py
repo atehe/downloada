@@ -31,6 +31,46 @@ def download_movie(url):
     print("\n>>>Download complete {} \n".format(filename))
 
 
+def choice(movie_list):
+    """Displays and returns url of the user's choice in list of movies
+
+    Args:
+        movie_list (list): list of movie links that the user should choose from.
+
+    Returns:
+        url to the chosen movie page.
+    """
+    print(" Found {} result(s) ".format(len(movie_list)).center(80, "-"))
+
+    # exit if no search result
+    if len(movie_list) == 0:
+        print("\nExiting...")
+        time.sleep(3)
+        sys.exit()
+
+    for search_num, movie in enumerate(movie_list):
+        print("{}. {}".format(search_num + 1, movie))
+
+    # validate user input
+    while True:
+        try:
+            user_input = int(
+                input("Please select a number from afobove (or ctrl + z to quit)\n")
+            )
+        except ValueError:
+            continue
+        else:
+            if user_input not in range(1, len(movie_list) + 1):
+                continue
+            else:
+                break
+
+    print(
+        "Retrieving page #{}: {}... \n".format(user_input, movie_list[user_input - 1])
+    )
+    return movie_list[user_input - 1]
+
+
 def main():
     search_word, episode_nums = parse_arguments(sys.argv)
 
@@ -44,39 +84,12 @@ def main():
     search_parser = bs4.BeautifulSoup(search_page.text, "html.parser")
     search_elems = search_parser.findAll("a", {"title": "Continue Reading"})
 
-    movie_links = [movies_elem.get("href") for movies_elem in search_elems]
+    movie_list = [movies_elem.get("href") for movies_elem in search_elems]
 
-    print(" Found {} result(s) ".format(len(movie_links)).center(80, "-"))
-
-    # exit if no search result
-    if len(movie_links) == 0:
-        print("\nExiting...")
-        time.sleep(3)
-        sys.exit()
-
-    for search_num, movie_link in enumerate(movie_links):
-        print("{}. {}".format(search_num + 1, movie_link))
-
-    # validate user input
-    while True:
-        try:
-            user_input = int(
-                input("Please select a number from above (or ctrl + z to quit)\n")
-            )
-        except ValueError:
-            continue
-        else:
-            if user_input not in range(1, len(movie_links) + 1):
-                continue
-            else:
-                break
-
-    print(
-        "Retrieving page #{}: {}... \n".format(user_input, movie_links[user_input - 1])
-    )
+    user_input = choice(movie_list)
 
     # get page of movie selected
-    movie_page = requests.get(movie_links[user_input - 1])
+    movie_page = requests.get(user_input)
     movie_page.raise_for_status()
 
     # find all movies download link in page
@@ -93,7 +106,7 @@ def main():
         download_link = movie_elem.get("href")
         if movie_elem.get_text().strip() == "Download Episode":
             episode_num += 1
-            if episode_num in episode_nums or episode_nums == None:
+            if episode_nums == None or episode_num in episode_nums:
                 download_movie(download_link)
 
         elif movie_elem.get_text().strip() == "Download Movie":
