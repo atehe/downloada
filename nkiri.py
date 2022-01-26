@@ -21,7 +21,7 @@ def download_movie(url):
         print(">>>{} exist \n".format(filename))
         return None
 
-    print("Press ctrl + z to stop download")
+    print("Getting ready to download from {} (ctrl + z to quit)".format(url))
     r = requests.get(url, stream=True)
     r.raise_for_status()
     print(">>>Connected to {}".format(url))
@@ -106,12 +106,10 @@ def main():
         if (movie_elem.get_text().strip() == "Download Episode") and (
             episode_nums == None or episode_num in episode_nums
         ):
-            # download_movie(download_link)
-            print(download_link)
+            download_movie(download_link)
 
         elif movie_elem.get_text().strip() == "Download Movie":
-            # download_movie(download_link)
-            print(download_link)
+            download_movie(download_link)
 
 
 if __name__ == "__main__":
