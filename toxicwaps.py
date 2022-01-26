@@ -1,8 +1,8 @@
-#! python3
+#! /usr/bin/python3
 # toxicwaps.py - Download movies from toxicwaps.com
 
 import requests, sys, bs4, time, os
-from nkiri import parse_arguments, download_movie, choice
+from nkiri import parse_arguments, download_movie, user_choice
 
 
 def parser(url):
