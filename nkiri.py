@@ -1,4 +1,4 @@
-#! python3
+#! /usr/bin/python3
 # nkiri.py - Downloads movies from nkiri.com
 
 import requests, sys, bs4, time, os
@@ -15,60 +15,55 @@ def parse_arguments(arg):
 
 
 def download_movie(url):
-    filename = url.split("/")[-1]
+    filename = url.split("/")[-1]  # gets movie name from url
+
     if os.path.exists(filename):
-        print("**{} exist**".format(filename))
+        print(">>>{} exist \n".format(filename))
         return None
+
+    print("Press ctrl + z to stop download")
     r = requests.get(url, stream=True)
     r.raise_for_status()
-    print("Connected to {}".format(url))
+    print(">>>Connected to {}".format(url))
 
     with open(filename, "wb") as f:
-        print("Downloading {}....".format(filename))
+        print(">>>Downloading {}....".format(filename))
         for chunk in r.iter_content(100000):
             f.write(chunk)
 
-    print("\n>>>Download complete {} \n".format(filename))
+    print(">>>Download complete {} \n".format(filename))
 
 
-def choice(movie_list):
-    """Displays and returns url of the user's choice in list of movies
+def user_choice(url_dict):
+    """Displays url keys and returns url of the user's choice in dictionary"""
 
-    Args:
-        movie_list (list): list of movie links that the user should choose from.
-
-    Returns:
-        url to the chosen movie page.
-    """
-    print(" Found {} result(s) ".format(len(movie_list)).center(80, "-"))
+    print("Found {} result(s) ".format(len(url_dict)).center(80, "-"))
 
     # exit if no search result
-    if len(movie_list) == 0:
+    if len(url_dict) == 0:
         print("\nExiting...")
         time.sleep(3)
         sys.exit()
 
-    for search_num, movie in enumerate(movie_list):
-        print("{}. {}".format(search_num + 1, movie))
+    url_keys = list(url_dict.keys())
+    for num, key in enumerate(url_keys):
+        print("{}. {}".format(num + 1, key))
 
     # validate user input
     while True:
         try:
             user_input = int(
-                input("Please select a number from afobove (or ctrl + z to quit)\n")
+                input("Please select a number from above (or ctrl + z to quit)\n")
             )
         except ValueError:
             continue
         else:
-            if user_input not in range(1, len(movie_list) + 1):
+            if user_input not in range(1, len(url_keys) + 1):
                 continue
             else:
                 break
-
-    print(
-        "Retrieving page #{}: {}... \n".format(user_input, movie_list[user_input - 1])
-    )
-    return movie_list[user_input - 1]
+    print("Retrieving page #{}: {}... \n".format(user_input, url_keys[user_input - 1]))
+    return url_dict[url_keys[user_input - 1]]
 
 
 def main():
@@ -82,35 +77,41 @@ def main():
 
     # find movies link from search result
     search_parser = bs4.BeautifulSoup(search_page.text, "html.parser")
-    search_elems = search_parser.findAll("a", {"title": "Continue Reading"})
+    search_elems = search_parser.findAll("a", {"rel": "bookmark"})
 
-    movie_list = [movies_elem.get("href") for movies_elem in search_elems]
+    search_dict = {
+        search_elem.get("title"): search_elem.get("href")
+        for search_elem in search_elems
+    }
 
-    user_input = choice(movie_list)
+    user_input = user_choice(search_dict)
 
     # get page of movie selected
     movie_page = requests.get(user_input)
     movie_page.raise_for_status()
 
     # find all movies download link in page
-    movies_parser = bs4.BeautifulSoup(movie_page.text, "html.parser")
-    movies_elem = movies_parser.findAll(
+    movie_parser = bs4.BeautifulSoup(movie_page.text, "html.parser")
+    movie_elems = movie_parser.findAll(
         "a", {"class": "elementor-button-link elementor-button elementor-size-md"}
     )
 
-    if movies_elem == []:
+    if len(movie_elems) == 0:
         print("No movie found")
 
-    episode_num = 0
-    for movie_elem in movies_elem:
+    for movie_elem in movie_elems:
         download_link = movie_elem.get("href")
-        if movie_elem.get_text().strip() == "Download Episode":
-            episode_num += 1
-            if episode_nums == None or episode_num in episode_nums:
-                download_movie(download_link)
+        episode_num = movie_elems.index(movie_elem) + 1
+
+        if (movie_elem.get_text().strip() == "Download Episode") and (
+            episode_nums == None or episode_num in episode_nums
+        ):
+            # download_movie(download_link)
+            print(download_link)
 
         elif movie_elem.get_text().strip() == "Download Movie":
-            download_movie(download_link)
+            # download_movie(download_link)
+            print(download_link)
 
 
 if __name__ == "__main__":
