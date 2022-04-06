@@ -6,9 +6,9 @@ Python scripts to automate the download of movies (series) from listed sites
 - [Toxicwaps](https://toxicwaps.com/)
 
 ### TO DO
-Currently the only complete script is Nkiri.
+Currently the only complete and working script is Nkiri.
+- Complete other scripts, some my need a touch of selenuim
 - Group functions into classes
-- Upadate other script
 - Add download progress bar
 
 ## Usage
